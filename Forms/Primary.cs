@@ -446,7 +446,8 @@ namespace DSLauncherV2
             { 
                 // Game Settings
                 case 2:
-                    this.forcedArguments.Text = this.LauncherSettings.UserSettings.MainServer;
+                    //this.forcedArguments.Text = this.LauncherSettings.UserSettings.MainServer;
+                    this.forcedArguments.Text = getServerArg();
                     this.forcedArguments.ReadOnly = true;
                     this.forcedArguments.Enabled = false;
                     break;
@@ -1879,5 +1880,41 @@ namespace DSLauncherV2
             this.LauncherSettings.UserSettings.Config.LauncherPatchLocation = Prompt.ShowDialog("Patch Server URL:").Trim();
             SaveConfig();
         }
+
+        #region PlaYsiAChanges
+        private string getServerArg()
+        {
+            string strRetVal = ""; // default value, should be changed when reading file
+            string strFileName = AppDomain.CurrentDomain.BaseDirectory + "ServerIP.txt"; // name of the file in relation to the executable
+
+            // file stuff, try block
+            try
+            {
+                if (!File.Exists(strFileName))
+                {
+                    // If the file doesn't exist, we'll make a default one
+                    using (StreamWriter fileStr = File.CreateText(strFileName))
+                    {
+                        // Writing a default file
+                        string strLineOne = "124.168.209.234:2302";
+                        fileStr.WriteLine(strLineOne);
+                    }
+                }
+
+                // reading block
+                using (StreamReader srFileRead = File.OpenText(strFileName))
+                {
+                    string strReadLine = srFileRead.ReadLine();
+                    strRetVal = "-s" + strReadLine; // this will end up being in the format: -sIP:PORT
+                }
+            }
+            catch(Exception excpFile)
+            {
+                MetroMessageBox.Show(this, excpFile.ToString(), "Error Reading ServerIP.txt", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
+            }
+
+            return strRetVal;
+        }
+        #endregion
     }
 }
