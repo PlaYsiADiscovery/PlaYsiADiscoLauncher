@@ -27,6 +27,11 @@ namespace DSLauncherV2
 {
     public sealed partial class Primary : MetroFramework.Forms.MetroForm
     {
+        // Constants
+        const string DNSERROR = "Error resolving DNS to IPv4";
+        const string DNSHOSTNAME = "playsia.pro";
+        const string PORTAPPEND = ":2302";
+
         public BackgroundWorker LoadingBackgroundWorker;
         private LauncherSettings LauncherSettings = DSLauncherV2.LauncherSettings.Instance;
         private List<MetroLink> lstFavoriteAccounts;
@@ -1884,36 +1889,55 @@ namespace DSLauncherV2
         #region PlaYsiAChanges
         private string getServerArg()
         {
-            string strRetVal = ""; // default value, should be changed when reading file
-            string strFileName = AppDomain.CurrentDomain.BaseDirectory + "ServerIP.txt"; // name of the file in relation to the executable
+            string strRetVal = ""; // init variable
+            bool booSuccess = true;
+            string strNewIP = "";
 
-            // file stuff, try block
+            // dns stuff, try block
             try
             {
-                if (!File.Exists(strFileName))
+                strNewIP = GrabIPAddressFromDomain(DNSHOSTNAME);
+
+                // check it worked
+                if(strRetVal.Equals(DNSERROR))
                 {
-                    // If the file doesn't exist, we'll make a default one
-                    using (StreamWriter fileStr = File.CreateText(strFileName))
-                    {
-                        // Writing a default file
-                        string strLineOne = "124.168.209.234:2302";
-                        fileStr.WriteLine(strLineOne);
-                    }
+                    booSuccess = false;
+                    MetroMessageBox.Show(this, "Error getting IP from domain[GrabIPAddressFromDomain()]", "Error", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
                 }
 
-                // reading block
-                using (StreamReader srFileRead = File.OpenText(strFileName))
+                if(booSuccess == true)
                 {
-                    string strReadLine = srFileRead.ReadLine();
-                    strRetVal = "-s" + strReadLine; // this will end up being in the format: -sIP:PORT
+                    // Continue...
+
+                    // append port
+                    strNewIP += PORTAPPEND;
+                    strRetVal = "-s" + strNewIP; // this will end up being in the format: -sIP:PORT
                 }
             }
-            catch(Exception excpFile)
+            catch(Exception excpDNS)
             {
-                MetroMessageBox.Show(this, excpFile.ToString(), "Error Reading ServerIP.txt", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
+                MetroMessageBox.Show(this, excpDNS.ToString(), "Error getting IP from domain", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
             }
 
             return strRetVal;
+        }
+
+        // Adapted from: https://learn.microsoft.com/en-us/dotnet/api/system.net.dns.gethostentry?view=netframework-4.8.1
+        string GrabIPAddressFromDomain(string hostname)
+        {
+            string strIPAddress = DNSERROR;
+
+            try
+            {
+                IPHostEntry host = Dns.GetHostEntry(hostname);
+                strIPAddress = host.AddressList[0].ToString(); // just take first IP
+            }
+            catch (Exception excpDNS)
+            {
+                MetroMessageBox.Show(this, excpDNS.ToString(), "Critical DNS Error", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
+            }
+
+            return strIPAddress;
         }
         #endregion
     }

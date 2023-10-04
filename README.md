@@ -1,3 +1,7 @@
+# PlaYsiA Changes
+- Unlocked weird force IP stuff
+- Grabs PlaYsiA Discovery IP from domain (update from the ServerIP.txt hackjob I did previously)
+
 # DSLauncher
 The DSLauncher is the tool used to launch the modified version of Freelancer executable for the Discovery mod.
 The launcher supplys a neat interface to specify different launch parameters that affect the in game settings.
